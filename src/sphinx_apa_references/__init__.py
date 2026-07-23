@@ -135,6 +135,9 @@ class APANoInbookPagePrefixStyle(APAStyle):
             sentence[optional_field("note")],
             self.format_preferred_web_ref(e),
         ]
+        
+    def get_misc_template(self, e):
+        return self.get_article_template(e)
 
     def get_book_template(self, e):
         # Required fields: author/editor, title, publisher, year
@@ -158,7 +161,7 @@ class APANoInbookPagePrefixStyle(APAStyle):
             sentence[optional_field("note")],
             self.format_preferred_web_ref(e),
         ]
-
+    
     def get_inbook_template(self, e):
         # Required fields: author/editor, title, chapter/pages, publisher, year
         # Optional fields: volume, series, address, edition, month, note, key,
