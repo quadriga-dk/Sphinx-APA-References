@@ -110,6 +110,27 @@ class APANoInbookPagePrefixStyle(APAStyle):
             ]
         ]
 
+    def format_creator_and_date(self, e):
+        if "author" in e.persons:
+            creator = self.format_names("author", as_sentence=False)
+        elif "editor" in e.persons:
+            creator = self.format_editor(e, as_sentence=False)
+        else:
+            creator = optional_field("organization")
+
+        return sentence(sep=" ")[
+            creator,
+            join[
+                "(",
+                first_of[
+                    optional[date],
+                    optional_field("date"),
+                    "n.d.",
+                ],
+                ")",
+            ],
+        ]
+
     def get_article_template(self, e):
         # Required fields: author, title, journal, year
         # Optional fields: volume, number, pages, month, note, key, doi, url
@@ -137,7 +158,16 @@ class APANoInbookPagePrefixStyle(APAStyle):
         ]
         
     def get_misc_template(self, e):
-        return self.get_article_template(e)
+        # All fields are optional for BibTeX misc entries.
+        # Supported fields: author/editor, organization, title, year/date,
+        #                   howpublished, note, doi, url
+        return toplevel[
+            self.format_creator_and_date(e),
+            optional[self.format_btitle(e, "title")],
+            sentence[optional_field("howpublished")],
+            sentence[optional_field("note")],
+            self.format_preferred_web_ref(e),
+        ]
 
     def get_book_template(self, e):
         # Required fields: author/editor, title, publisher, year
@@ -198,26 +228,8 @@ class APANoInbookPagePrefixStyle(APAStyle):
         # Required field: title
         # Optional fields: author/editor, organization, year/date, note,
         #                  doi, url
-        if "author" in e.persons:
-            creator = self.format_names("author", as_sentence=False)
-        elif "editor" in e.persons:
-            creator = self.format_editor(e, as_sentence=False)
-        else:
-            creator = optional_field("organization")
-
         return toplevel[
-            sentence(sep=" ")[
-                creator,
-                join[
-                    "(",
-                    first_of[
-                        optional[date],
-                        optional_field("date"),
-                        "n.d.",
-                    ],
-                    ")",
-                ],
-            ],
+            self.format_creator_and_date(e),
             self.format_title(e, "title"),
             sentence[optional_field("note")],
             self.format_preferred_web_ref(e),
