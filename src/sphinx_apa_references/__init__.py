@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 
 import pybtex.plugin
 import sphinxcontrib.bibtex.plugin
+from docutils import nodes
 from names.firstlast import NameStyle as APAFirstLastNameStyle
 
 # formatting.apa resolves firstlast at import time, so pin the matching
@@ -251,6 +252,38 @@ def override_config(app, config):
     config.bibtex_reference_style = "author_year_round"  # override or set
 
 
+def move_multiple_backrefs_to_end(app, doctree, docname):
+    """Move citation backrefs after the rendered bibliography text."""
+    if app.builder.format != "html":
+        return
+
+    for citation in doctree.findall(nodes.citation):
+        backrefs = citation.get("backrefs", [])
+        if len(backrefs) < 2:
+            continue
+
+        paragraphs = list(citation.findall(nodes.paragraph))
+        if not paragraphs:
+            continue
+
+        backrefs_node = nodes.inline(classes=["backrefs"])
+        backrefs_node += nodes.Text("(")
+        for index, backref in enumerate(backrefs, 1):
+            if index > 1:
+                backrefs_node += nodes.Text(",")
+            backrefs_node += nodes.reference(
+                "",
+                str(index),
+                refid=backref,
+                internal=True,
+            )
+        backrefs_node += nodes.Text(")")
+
+        paragraphs[-1] += nodes.Text(" ")
+        paragraphs[-1] += backrefs_node
+        citation["backrefs"] = []
+
+
 def register_plugins():
     sphinxcontrib.bibtex.plugin.register_plugin(
         "sphinxcontrib.bibtex.style.referencing",
@@ -273,3 +306,4 @@ def setup(app):
     app.connect("build-finished", copy_stylesheet)
     app.add_css_file("apastyle.css")
     app.connect("config-inited", override_config)
+    app.connect("doctree-resolved", move_multiple_backrefs_to_end)

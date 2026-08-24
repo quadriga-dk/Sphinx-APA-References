@@ -10,5 +10,6 @@ div.citation p {
 }
 
 div.citation span.backrefs {
-  float:right;
+  float: none;
+  white-space: nowrap;
 }
