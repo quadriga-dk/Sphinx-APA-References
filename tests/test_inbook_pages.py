@@ -12,6 +12,8 @@ def render_entry(
     style_class=APANoInbookPagePrefixStyle,
     doi=None,
     url=None,
+    howpublished=None,
+    note=None,
 ):
     optional_fields = ""
     if pages:
@@ -20,6 +22,10 @@ def render_entry(
         optional_fields += f"            doi = {{{doi}}},\n"
     if url:
         optional_fields += f"            url = {{{url}}},\n"
+    if howpublished:
+        optional_fields += f"            howpublished = {{{howpublished}}},\n"
+    if note:
+        optional_fields += f"            note = {{{note}}},\n"
 
     bib_data = parse_string(
         f"""
@@ -177,6 +183,33 @@ class InbookPageFormattingTests(unittest.TestCase):
         self.assertIn("doi:10.1234/online", rendered)
         self.assertNotIn("URL:", rendered)
         self.assertNotIn("https://example.com/online", rendered)
+
+    def test_misc_renders_misc_fields_and_prefers_doi(self):
+        rendered = render_entry(
+            "misc",
+            doi="10.1234/misc",
+            url="https://example.com/misc",
+            howpublished="Research archive",
+            note="Supplementary material",
+        )
+
+        self.assertIn("Doe, J. (2024)", rendered)
+        self.assertIn("A Sample Chapter", rendered)
+        self.assertIn("Research archive", rendered)
+        self.assertIn("Supplementary material", rendered)
+        self.assertIn("doi:10.1234/misc", rendered)
+        self.assertNotIn("URL:", rendered)
+        self.assertNotIn("https://example.com/misc", rendered)
+        self.assertNotIn("A Sample Journal", rendered)
+
+    def test_misc_renders_url_when_doi_missing(self):
+        rendered = render_entry(
+            "misc",
+            url="https://example.com/misc",
+        )
+
+        self.assertIn("URL: https://example.com/misc", rendered)
+        self.assertNotIn("doi:", rendered)
 
 
 if __name__ == "__main__":
