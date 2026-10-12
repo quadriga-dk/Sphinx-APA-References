@@ -197,6 +197,9 @@ class APANoInbookPagePrefixStyle(APAStyle):
         # Required fields: author/editor, title, chapter/pages, publisher, year
         # Optional fields: volume, series, address, edition, month, note, key,
         #                  doi, url
+        return self._get_chapter_template(e, template_field("publisher"))
+
+    def _get_chapter_template(self, e, publisher):
         return toplevel[
             sentence(sep=" ")[
                 self.format_names("author"),
@@ -216,14 +219,14 @@ class APANoInbookPagePrefixStyle(APAStyle):
             ],
             sentence(sep=": ")[
                 optional_field("address"),
-                template_field("publisher"),
+                publisher,
             ],
             sentence[optional_field("note")],
             self.format_preferred_web_ref(e),
         ]
 
     def get_incollection_template(self, e):
-        return self.get_inbook_template(e)
+        return self._get_chapter_template(e, optional_field("publisher"))
 
     def get_online_template(self, e):
         # Required field: title
